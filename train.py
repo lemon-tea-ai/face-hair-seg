@@ -5,6 +5,7 @@ from torch.optim import Adam
 
 from dataset import gen_dataloaders
 from nets.MobileNetV2_unet import MobileNetV2_unet
+from config import INPUT_SIZE
 
 
 # count number of model parameters
@@ -78,7 +79,7 @@ def main():
                                                  val_split=0.05,
                                                  batch_size=args.batch_size,
                                                  seed=args.seed,
-                                                 img_size=160,
+                                                 img_size=INPUT_SIZE,
                                                  cuda=args.cuda
                                                  )
 

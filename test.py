@@ -5,6 +5,7 @@ from PIL import Image
 from torchvision import transforms
 import torch
 from nets.MobileNetV2_unet import MobileNetV2_unet
+from config import INPUT_SIZE
 
 
 # load pre-trained model and weights
@@ -36,7 +37,7 @@ if __name__ == '__main__':
     image_files = sorted(glob('{}/*.jp*g'.format(args.data_folder)))
     model = load_model()
     transform = transforms.Compose([
-        transforms.Resize((160, 160)),
+        transforms.Resize((INPUT_SIZE, INPUT_SIZE)),
         transforms.ToTensor(),
     ])
     print('Model loaded')

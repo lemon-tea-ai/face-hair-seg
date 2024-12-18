@@ -10,6 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 import os
+from config import INPUT_SIZE
 
 
 def _mask_to_img(mask_file):
@@ -63,7 +64,7 @@ class MaskDataset(Dataset):
 
 
 def gen_dataloaders(indir, val_split=0.05, shuffle=True,
-                    batch_size=4, seed=42, img_size=224, cuda=True):
+                    batch_size=4, seed=42, img_size=INPUT_SIZE, cuda=True):
     data_transforms = {
         'train': transforms.Compose([
             # transforms.ColorJitter(0.3, 0.3, 0.3, 0.3),
@@ -190,7 +191,7 @@ class FaceDataset(Dataset):
         
         return img, np.int64(labels)
 
-def gen_dataloaders(data_folder, val_split=0.1, batch_size=8, img_size=160, seed=42, cuda=False):
+def gen_dataloaders(data_folder, val_split=0.1, batch_size=8, img_size=INPUT_SIZE, seed=42, cuda=False):
     # Set random seed for reproducibility
     np.random.seed(seed)
     torch.manual_seed(seed)
