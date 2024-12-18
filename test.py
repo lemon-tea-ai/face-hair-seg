@@ -36,7 +36,7 @@ if __name__ == '__main__':
     image_files = sorted(glob('{}/*.jp*g'.format(args.data_folder)))
     model = load_model()
     transform = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((160, 160)),
         transforms.ToTensor(),
     ])
     print('Model loaded')

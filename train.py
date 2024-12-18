@@ -78,7 +78,7 @@ def main():
                                                  val_split=0.05, shuffle=True,
                                                  batch_size=args.batch_size,
                                                  seed=args.seed,
-                                                 img_size=224,
+                                                 img_size=160,
                                                  cuda=args.cuda
                                                  )
 

@@ -6,9 +6,10 @@ import cv2
 import numpy as np
 from PIL import Image
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import transforms
 from torch.utils.data.sampler import SubsetRandomSampler
+import os
 
 
 def _mask_to_img(mask_file):
@@ -148,3 +149,77 @@ if __name__ == '__main__':
         ax.imshow(mask.squeeze())
 
     plt.show()
+
+
+class FaceDataset(Dataset):
+    def __init__(self, root_dir, img_size=160, transform=None):
+        self.root_dir = root_dir
+        self.transform = transform
+        self.img_size = img_size
+        
+        # Get all image files
+        self.images = [f for f in os.listdir(os.path.join(root_dir, 'images')) 
+                      if f.endswith(('.png', '.jpg', '.jpeg'))]
+        
+    def __len__(self):
+        return len(self.images)
+    
+    def __getitem__(self, idx):
+        img_name = self.images[idx]
+        
+        # Load image and mask
+        image = Image.open(os.path.join(self.root_dir, 'images', img_name))
+        mask = Image.open(os.path.join(self.root_dir, 'masks', img_name))
+        
+        # Resize both image and mask
+        image = image.resize((self.img_size, self.img_size), Image.BILINEAR)
+        mask = mask.resize((self.img_size, self.img_size), Image.NEAREST)
+        
+        # Apply additional transforms if any
+        if self.transform:
+            image = self.transform(image)
+            
+        # Convert mask to tensor
+        mask = torch.from_numpy(np.array(mask)).long()
+        
+        return image, mask
+
+def gen_dataloaders(data_folder, val_split=0.1, batch_size=8, img_size=160, seed=42, cuda=False):
+    # Set random seed for reproducibility
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    
+    # Define transforms
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                           std=[0.229, 0.224, 0.225])
+    ])
+    
+    # Create dataset
+    dataset = FaceDataset(data_folder, img_size=img_size, transform=transform)
+    
+    # Split into train and validation
+    dataset_size = len(dataset)
+    indices = list(range(dataset_size))
+    split = int(np.floor(val_split * dataset_size))
+    
+    np.random.shuffle(indices)
+    train_indices, val_indices = indices[split:], indices[:split]
+    
+    # Create samplers
+    train_sampler = torch.utils.data.SubsetRandomSampler(train_indices)
+    valid_sampler = torch.utils.data.SubsetRandomSampler(val_indices)
+    
+    # Create data loaders
+    train_loader = DataLoader(dataset, batch_size=batch_size, 
+                            sampler=train_sampler,
+                            num_workers=2 if cuda else 0,
+                            pin_memory=cuda)
+    
+    valid_loader = DataLoader(dataset, batch_size=batch_size,
+                            sampler=valid_sampler,
+                            num_workers=2 if cuda else 0,
+                            pin_memory=cuda)
+    
+    return train_loader, valid_loader

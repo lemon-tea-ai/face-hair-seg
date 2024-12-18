@@ -13,7 +13,7 @@ class MobileNetV2_unet(nn.Module):
     def __init__(self, pre_trained='weights/mobilenet_v2.pth.tar'):
         super(MobileNetV2_unet, self).__init__()
 
-        self.backbone = MobileNetV2()
+        self.backbone = MobileNetV2(input_size=160)
 
         self.dconv1 = nn.ConvTranspose2d(1280, 96, 4, padding=1, stride=2)
         self.invres1 = InvertedResidual(192, 96, 1, 6)
