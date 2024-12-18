@@ -5,6 +5,7 @@ import sys
 import torch
 import torch.nn as nn
 from torch.nn.functional import interpolate
+from torch.ao.nn.quantized import FloatFunctional
 
 from nets.MobileNetV2 import MobileNetV2, InvertedResidual
 
@@ -13,23 +14,51 @@ class MobileNetV2_unet(nn.Module):
     def __init__(self, pre_trained='weights/mobilenet_v2.pth.tar'):
         super(MobileNetV2_unet, self).__init__()
 
+        # Quantized floating point operations
+        self.skip_add = FloatFunctional()
+        self.skip_cat = FloatFunctional()
+
+        # Main backbone
         self.backbone = MobileNetV2()
 
-        self.dconv1 = nn.ConvTranspose2d(1280, 96, 4, padding=1, stride=2)
+        # Replace transpose convolutions with regular convs + interpolate
+        self.dconv1 = nn.Sequential(
+            nn.Conv2d(1280, 96, 1),
+            nn.BatchNorm2d(96),
+            nn.ReLU6(inplace=True)
+        )
+
         self.invres1 = InvertedResidual(192, 96, 1, 6)
 
-        self.dconv2 = nn.ConvTranspose2d(96, 32, 4, padding=1, stride=2)
+        self.dconv2 = nn.Sequential(
+            nn.Conv2d(96, 32, 1),
+            nn.BatchNorm2d(32),
+            nn.ReLU6(inplace=True)
+        )
+
         self.invres2 = InvertedResidual(64, 32, 1, 6)
 
-        self.dconv3 = nn.ConvTranspose2d(32, 24, 4, padding=1, stride=2)
+        self.dconv3 = nn.Sequential(
+            nn.Conv2d(32, 24, 1),
+            nn.BatchNorm2d(24),
+            nn.ReLU6(inplace=True)
+        )
+
         self.invres3 = InvertedResidual(48, 24, 1, 6)
 
-        self.dconv4 = nn.ConvTranspose2d(24, 16, 4, padding=1, stride=2)
+        self.dconv4 = nn.Sequential(
+            nn.Conv2d(24, 16, 1),
+            nn.BatchNorm2d(16),
+            nn.ReLU6(inplace=True)
+        )
+
         self.invres4 = InvertedResidual(32, 16, 1, 6)
 
-        self.conv_last = nn.Conv2d(16, 3, 1)
-
-        self.conv_score = nn.Conv2d(3, 1, 1)
+        self.conv_last = nn.Sequential(
+            nn.Conv2d(16, 3, 1),
+            nn.BatchNorm2d(3),
+            nn.ReLU6(inplace=True)
+        )
 
         self._init_weights()
 
