@@ -6,7 +6,7 @@ import numpy as np  # Make sure to import numpy
 traced_model = torch.jit.load("traced.pt")
 
 # Convert to CoreML with 8-bit quantization
-model_input = ct.TensorType(shape=(1, 3, 224, 224))
+model_input = ct.TensorType(shape=(1, 3, 160, 160))
 coreml_model = ct.convert(
     traced_model,
     inputs=[model_input],

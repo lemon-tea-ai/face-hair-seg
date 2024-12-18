@@ -122,4 +122,4 @@ if __name__ == '__main__':
     # Debug
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     net = MobileNetV2_unet(pre_trained=None)
-    net(torch.randn(1, 3, 224, 224))
+    net(torch.randn(1, 3, 160, 160))

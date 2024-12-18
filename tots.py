@@ -10,7 +10,7 @@ def load_model():
 
 model = load_model()
 
-example_input = torch.randn(1,3,224,224)
+example_input = torch.randn(1,3,160,160)
 
 traced_model = torch.jit.trace(model, example_input)
 traced_model.save("traced.pt")

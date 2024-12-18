@@ -27,4 +27,4 @@ class ImgWrapNet(nn.Module):
 if __name__ == '__main__':
     WEIGHT_PATH = 'outputs/train_unet/0-best.pth'
     net = ImgWrapNet(torch.load(WEIGHT_PATH, map_location='cpu'))
-    net(torch.randn(1, 3, 224, 224))
+    net(torch.randn(1, 3, 160, 160))
