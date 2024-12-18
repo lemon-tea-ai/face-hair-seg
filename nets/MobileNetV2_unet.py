@@ -66,70 +66,51 @@ class MobileNetV2_unet(nn.Module):
             self.backbone.load_state_dict(torch.load(pre_trained))
 
     def forward(self, x):
+        # Encoder path
         for n in range(0, 2):
             x = self.backbone.features[n](x)
         x1 = x
-        logging.debug((x1.shape, 'x1'))
-
+        
         for n in range(2, 4):
             x = self.backbone.features[n](x)
         x2 = x
-        logging.debug((x2.shape, 'x2'))
-
+        
         for n in range(4, 7):
             x = self.backbone.features[n](x)
         x3 = x
-        logging.debug((x3.shape, 'x3'))
-
+        
         for n in range(7, 14):
             x = self.backbone.features[n](x)
         x4 = x
-        logging.debug((x4.shape, 'x4'))
-
+        
         for n in range(14, 19):
             x = self.backbone.features[n](x)
         x5 = x
-        logging.debug((x5.shape, 'x5'))
-
-        up1 = torch.cat([
-            x4,
-            self.dconv1(x)
-        ], dim=1)
+        
+        # Decoder path with explicit size matching
+        x = self.dconv1(x)
+        x = interpolate(x, size=x4.shape[2:], mode='bilinear', align_corners=False)
+        up1 = torch.cat([x4, x], dim=1)
         up1 = self.invres1(up1)
-        logging.debug((up1.shape, 'up1'))
-
-        up2 = torch.cat([
-            x3,
-            self.dconv2(up1)
-        ], dim=1)
+        
+        x = self.dconv2(up1)
+        x = interpolate(x, size=x3.shape[2:], mode='bilinear', align_corners=False)
+        up2 = torch.cat([x3, x], dim=1)
         up2 = self.invres2(up2)
-        logging.debug((up2.shape, 'up2'))
-
-        up3 = torch.cat([
-            x2,
-            self.dconv3(up2)
-        ], dim=1)
+        
+        x = self.dconv3(up2)
+        x = interpolate(x, size=x2.shape[2:], mode='bilinear', align_corners=False)
+        up3 = torch.cat([x2, x], dim=1)
         up3 = self.invres3(up3)
-        logging.debug((up3.shape, 'up3'))
-
-        up4 = torch.cat([
-            x1,
-            self.dconv4(up3)
-        ], dim=1)
+        
+        x = self.dconv4(up3)
+        x = interpolate(x, size=x1.shape[2:], mode='bilinear', align_corners=False)
+        up4 = torch.cat([x1, x], dim=1)
         up4 = self.invres4(up4)
-        logging.debug((up4.shape, 'up4'))
-
+        
         x = self.conv_last(up4)
-        logging.debug((x.shape, 'conv_last'))
-
-        # x = self.conv_score(x)
-        # logging.debug((x.shape, 'conv_score'))
-
         x = interpolate(x, scale_factor=2, mode='bilinear', align_corners=False)
-        logging.debug((x.shape, 'interpolate'))
-
-        # x = torch.sigmoid(x)
-
+        
         return x
 
     def _init_weights(self):
