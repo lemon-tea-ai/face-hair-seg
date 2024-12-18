@@ -152,37 +152,43 @@ if __name__ == '__main__':
 
 
 class FaceDataset(Dataset):
-    def __init__(self, root_dir, img_size=160, transform=None):
-        self.root_dir = root_dir
+    def __init__(self, path='./data', img_size=160, transform=None):
         self.transform = transform
         self.img_size = img_size
         
-        # Get all image files
-        self.images = [f for f in os.listdir(os.path.join(root_dir, 'images')) 
-                      if f.endswith(('.png', '.jpg', '.jpeg'))]
+        # Get mask files and corresponding image files
+        self.mask_files = sorted(glob('{}/masks/*.ppm'.format(path)))
+        self.img_files = [_mask_to_img(f) for f in self.mask_files]
         
     def __len__(self):
-        return len(self.images)
+        return len(self.img_files)
     
     def __getitem__(self, idx):
-        img_name = self.images[idx]
-        
         # Load image and mask
-        image = Image.open(os.path.join(self.root_dir, 'images', img_name))
-        mask = Image.open(os.path.join(self.root_dir, 'masks', img_name))
+        img = cv2.imread(self.img_files[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        mask = cv2.imread(self.mask_files[idx])
+        
+        # Convert to PIL for resizing
+        img = Image.fromarray(img)
+        mask = Image.fromarray(mask)
         
         # Resize both image and mask
-        image = image.resize((self.img_size, self.img_size), Image.BILINEAR)
+        img = img.resize((self.img_size, self.img_size), Image.BILINEAR)
         mask = mask.resize((self.img_size, self.img_size), Image.NEAREST)
         
         # Apply additional transforms if any
         if self.transform:
-            image = self.transform(image)
-            
-        # Convert mask to tensor
-        mask = torch.from_numpy(np.array(mask)).long()
+            img = self.transform(img)
         
-        return image, mask
+        # Process mask similar to original dataset
+        mask = np.array(mask)
+        labels = np.zeros_like(mask[:,:,0])
+        labels[np.where(mask[:,:,1] > 0)] = 1  # hair
+        labels[np.where(mask[:,:,2] > 0)] = 2  # face
+        
+        return img, np.int64(labels)
 
 def gen_dataloaders(data_folder, val_split=0.1, batch_size=8, img_size=160, seed=42, cuda=False):
     # Set random seed for reproducibility
