@@ -4,7 +4,7 @@ from config import INPUT_SIZE
 
 def load_model():
     model = MobileNetV2_unet(None).to(torch.device("cpu"))
-    state_dict = torch.load("checkpoints/model.pt", map_location='cpu')
+    state_dict = torch.load("checkpoints/best128.pt", map_location='cpu')
     model.load_state_dict(state_dict)
     model.eval()
     return model

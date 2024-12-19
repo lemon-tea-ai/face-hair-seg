@@ -16,4 +16,4 @@ coreml_model = ct.convert(
 )
 
 # Save the original model first
-coreml_model.save("facehairseg.mlpackage")
+coreml_model.save("facehairseg128.mlpackage")
